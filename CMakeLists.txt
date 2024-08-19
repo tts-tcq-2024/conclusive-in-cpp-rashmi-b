@@ -5,7 +5,7 @@ project(cleancode)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(GTest REQUIRED COMPONENTS gtest gmock gtest_main gmock_main)
+# find_package(GTest REQUIRED COMPONENTS gtest gmock gtest_main gmock_main)
 
 include(FetchContent)
 include(GoogleTest)
