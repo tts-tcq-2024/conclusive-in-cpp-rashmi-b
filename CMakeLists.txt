@@ -29,4 +29,4 @@ target_link_libraries(
 )
 
 include(GoogleTest)
-# gtest_discover_tests(cleancode)
+gtest_discover_tests(cleancode)
