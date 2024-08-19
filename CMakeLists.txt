@@ -25,7 +25,6 @@ target_link_libraries(
   cleancode
   GTest::gmock_main
   gtest_main
-  gmock_main
   gcov
 )
 

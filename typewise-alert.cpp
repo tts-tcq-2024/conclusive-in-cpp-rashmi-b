@@ -41,7 +41,7 @@ TargetAlert* getAlert(const AlertTarget &alertTarget) {
     if(alertTarget == TO_CONTROLLER){
         targetAlert = new TargetAlert(new ControllerAlert);
     }
-    if(alertTarget == TO_EMAIL){
+    else if(alertTarget == TO_EMAIL){
         targetAlert = new TargetAlert(new EmailAlert);
     }
     return targetAlert;

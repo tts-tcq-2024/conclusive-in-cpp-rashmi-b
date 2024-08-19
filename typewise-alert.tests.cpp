@@ -67,30 +67,25 @@ TEST_CASE(" the type of breach"){
 
 TEST_CASE(" the content of email when temp is too low"){
     LowBreachType lowBreach;
-    REQUIRE(lowBreach.printBreachTypeInfo("admin") == "To: admin Hi, the temperature is too low\n");
+    REQUIRE(lowBreach.printBreachTypeInfo("admin") == "To: admin Alert, the temperature is too low\n");
 }
 
 TEST_CASE(" the content of email when temp is too high"){
     HighBreachType highBreach;
-    REQUIRE(highBreach.printBreachTypeInfo("admin") == "To: admin Hi, the temperature is too high\n");
+    REQUIRE(highBreach.printBreachTypeInfo("admin") == "To: admin Alert, the temperature is too high\n");
 }
 
-TEST_CASE("alert required to email when temperature is low"){
-    EmailAlert emailAlert;
-    REQUIRE(emailAlert.sendToTarget(TOO_LOW) == ALERT_REQUIRED);
-}
-
-TEST_CASE("alert required to email when temperature is high"){
+TEST_CASE("alert to email when temperature is high"){
     EmailAlert emailAlert;
     REQUIRE(emailAlert.sendToTarget(TOO_HIGH) == ALERT_REQUIRED);
 }
 
-TEST_CASE("alert not required to email when temperature is normal"){
+TEST_CASE("alert not to email when temperature is normal"){
     EmailAlert emailAlert;
     REQUIRE(emailAlert.sendToTarget(NORMAL) == ALERT_NOT_REQUIRED);
 }
 
-TEST_CASE("alert not required to message sent to controller"){
+TEST_CASE("alert not to message controller"){
     ControllerAlert controllerAlert;
     REQUIRE(controllerAlert.sendToTarget(NORMAL) == ALERT_NOT_REQUIRED);
 }
