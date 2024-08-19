@@ -1,72 +1,114 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 
-#include "test/catch.h"
-#include <gtest/gtest.h>
+#include "test/catch.hpp"
 #include "typewise-alert.h"
+#include "alertInterface.h"
+#include "temperatureAlerter.h"
+#include "userAndControllerAlerter.h"
 
-TEST_CASE("infers the breach according to limits") {
-  REQUIRE(inferBreach(10, 20, 30) == TOO_LOW);
-  REQUIRE(inferBreach(32, 22, 30) == TOO_HIGH);
-  REQUIRE(inferBreach(22, 20, 30) == NORMAL);
+TargetAlert *getAlert(const AlertTarget &alertTarget);
+
+TEST_CASE("classifies the Breach depending for PASSIVE_COOLING type") {
+    REQUIRE(classifyTemperatureBreach(PASSIVE_COOLING, 50) == TOO_HIGH);
+    REQUIRE(classifyTemperatureBreach(PASSIVE_COOLING, 0) == NORMAL);
+    REQUIRE(classifyTemperatureBreach(PASSIVE_COOLING, -10) == TOO_LOW);
 }
 
-TEST_CASE("classify temperate breach") {
-  REQUIRE(classifyTemperatureBreach(PASSIVE_COOLING, 24) == NORMAL);
-  REQUIRE(classifyTemperatureBreach(PASSIVE_COOLING, 36) == TOO_HIGH);
-  REQUIRE(classifyTemperatureBreach(HI_ACTIVE_COOLING, 42) == NORMAL);
-  REQUIRE(classifyTemperatureBreach(HI_ACTIVE_COOLING, 48) == TOO_HIGH);
-  REQUIRE(classifyTemperatureBreach(MED_ACTIVE_COOLING, 36) == NORMAL);
-  REQUIRE(classifyTemperatureBreach(MED_ACTIVE_COOLING, 42) == TOO_HIGH);
+TEST_CASE("classifies the Breach depending for HI_ACTIVE_COOLING type") {
+    REQUIRE(classifyTemperatureBreach(HI_ACTIVE_COOLING, 50) == TOO_HIGH);
+    REQUIRE(classifyTemperatureBreach(HI_ACTIVE_COOLING, 0) == NORMAL);
+    REQUIRE(classifyTemperatureBreach(HI_ACTIVE_COOLING, -10) == TOO_LOW);
 }
 
-TEST_CASE("Test checkAndAlert(to controller)") {
-
-  BatteryCharacter batterych = {
-    .coolingType = HI_ACTIVE_COOLING
-  };
-
-  std::ostringstream toController;
-  std::streambuf* streambuf_1 = std::cout.rdbuf();
-  std::cout.rdbuf(toController.rdbuf());
-
-  checkAndAlert(TO_CONTROLLER, batterych, 50);
-  
-  //restore out stream
-  std::cout.rdbuf(streambuf_1);
-  REQUIRE(toController.str() == "65261 : 2\n");
+TEST_CASE("classifies the Breach depending for MED_ACTIVE_COOLING type") {
+    REQUIRE(classifyTemperatureBreach(MED_ACTIVE_COOLING, 50) == TOO_HIGH);
+    REQUIRE(classifyTemperatureBreach(MED_ACTIVE_COOLING, 0) == NORMAL);
+    REQUIRE(classifyTemperatureBreach(MED_ACTIVE_COOLING, -10) == TOO_LOW);
 }
 
-TEST_CASE("Test checkAndAlert(to email too high)") {
-
-  BatteryCharacter batterych_HAC = {
-    .coolingType = HI_ACTIVE_COOLING
-  };
-
-  std::ostringstream toEmail;
-  std::streambuf* streambuf_1 = std::cout.rdbuf();
-  std::cout.rdbuf(toEmail.rdbuf());
-
-  checkAndAlert(TO_EMAIL, batterych_HAC, 46);
-  
-  //restore out stream
-  std::cout.rdbuf(streambuf_1);
-  REQUIRE(toEmail.str() == "To: user@mail.com\n Alert! temperature is too high\n\n");
+TEST_CASE("infer the breach type based on limits"){
+    PassiveCooling breachClassifier;
+    REQUIRE(breachClassifier.inferBreach(10, 0, 20) == NORMAL);
+    REQUIRE(breachClassifier.inferBreach(21, 0, 20) == TOO_HIGH);
+    REQUIRE(breachClassifier.inferBreach(-1, 0, 20) == TOO_LOW);
 }
 
-TEST_CASE("Test checkAndAlert(to email too low)") {
-  
-  BatteryCharacter batterych_PC = {
-    .coolingType = PASSIVE_COOLING
-  };
-  
-  std::ostringstream toEmail;
-  std::streambuf* streambuf_2 = std::cout.rdbuf();
-  std::cout.rdbuf(toEmail.rdbuf());
-
-  checkAndAlert(TO_EMAIL, batterych_PC, -10);
-  
-  //restore out stream
-  std::cout.rdbuf(streambuf_2);
-  REQUIRE(toEmail.str() == "To: user@mail.com\n Alert! temperature is too low\n");
+TEST_CASE("gets breach type for Hi Active cooling"){
+    HiActiveCooling cooling;
+    REQUIRE(cooling.checkTempBreachType(40) == NORMAL);
+    REQUIRE(cooling.checkTempBreachType(-20) == TOO_LOW);
+    REQUIRE(cooling.checkTempBreachType(50) == TOO_HIGH);
 }
 
+TEST_CASE("gets breach type for Passive cooling"){
+    PassiveCooling cooling;
+    REQUIRE(cooling.checkTempBreachType(30) == NORMAL);
+    REQUIRE(cooling.checkTempBreachType(-20) == TOO_LOW);
+    REQUIRE(cooling.checkTempBreachType(40) == TOO_HIGH);
+}
+
+TEST_CASE("gets breach type for MedActiveCooling cooling"){
+    MedActiveCooling cooling;
+    REQUIRE(cooling.checkTempBreachType(30) == NORMAL);
+    REQUIRE(cooling.checkTempBreachType(-20) == TOO_LOW);
+    REQUIRE(cooling.checkTempBreachType(45) == TOO_HIGH);
+}
+
+TEST_CASE("classifies the type of breach"){
+    TemperatureBreachClassifier *breachClassifier = new TemperatureBreachClassifier(new PassiveCooling);
+    REQUIRE(breachClassifier->classifyBreach(54) == TOO_HIGH );
+    REQUIRE(breachClassifier->classifyBreach(54) == TOO_HIGH );
+}
+
+TEST_CASE(" the type of breach"){
+    TemperatureBreachClassifier *breachClassifier = new TemperatureBreachClassifier(new PassiveCooling);
+    REQUIRE(breachClassifier->classifyBreach(54) == TOO_HIGH );
+}
+
+TEST_CASE(" the content of email when temp is too low"){
+    LowBreachType lowBreach;
+    REQUIRE(lowBreach.printBreachTypeInfo("admin") == "To: admin Hi, the temperature is too low\n");
+}
+
+TEST_CASE(" the content of email when temp is too high"){
+    HighBreachType highBreach;
+    REQUIRE(highBreach.printBreachTypeInfo("admin") == "To: admin Hi, the temperature is too high\n");
+}
+
+TEST_CASE("alert required to email when temperature is low"){
+    EmailAlert emailAlert;
+    REQUIRE(emailAlert.sendToTarget(TOO_LOW) == ALERT_REQUIRED);
+}
+
+TEST_CASE("alert required to email when temperature is high"){
+    EmailAlert emailAlert;
+    REQUIRE(emailAlert.sendToTarget(TOO_HIGH) == ALERT_REQUIRED);
+}
+
+TEST_CASE("alert not required to email when temperature is normal"){
+    EmailAlert emailAlert;
+    REQUIRE(emailAlert.sendToTarget(NORMAL) == ALERT_NOT_REQUIRED);
+}
+
+TEST_CASE("alert not required to message sent to controller"){
+    ControllerAlert controllerAlert;
+    REQUIRE(controllerAlert.sendToTarget(NORMAL) == ALERT_NOT_REQUIRED);
+}
+
+TEST_CASE("valid output from checkAndAlert"){
+    BatteryCharacter batteryChar;
+    batteryChar.coolingType = PASSIVE_COOLING;
+    REQUIRE(checkAndAlert(TO_CONTROLLER, batteryChar, 45) == ALERT_NOT_SENT);
+}
+
+TEST_CASE("test output for checkAndAlert PASSIVE_COOLING to controller"){
+    BatteryCharacter batteryChar;
+    batteryChar.coolingType = PASSIVE_COOLING;
+    REQUIRE(checkAndAlert(TO_CONTROLLER, batteryChar, 45) == ALERT_NOT_SENT);
+}
+
+TEST_CASE("test output for checkAndAlert PASSIVE_COOLING to email"){
+    BatteryCharacter batteryChar;
+    batteryChar.coolingType = PASSIVE_COOLING;
+    REQUIRE(checkAndAlert(TO_EMAIL, batteryChar, 45) == ALERT_SENT);
+}
