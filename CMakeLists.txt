@@ -5,6 +5,8 @@ project(cleancode)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(GTest REQUIRED COMPONENTS gtest gmock gtest_main gmock_main)
+
 include(FetchContent)
 include(GoogleTest)
 
@@ -25,10 +27,14 @@ add_executable(
 )
 target_link_libraries(
   cleancode
+  GTest::gtest
+  GTest::gmock
+  GTest::gtest_main
   GTest::gmock_main
-  gtest_main
   gcov
 )
 
 include(GoogleTest)
-gtest_discover_tests(cleancode)
+gtest_discover_tests(${PROJECT_NAME}
+  DISCOVERY_MODE PRE_TEST
+)
